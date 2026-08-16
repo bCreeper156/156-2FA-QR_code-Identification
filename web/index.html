@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2FA 备用密钥提取工具</title>
+    <style>
+        /* ===== 全局重置 & 字体 ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 780px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 28px;
+            box-shadow: 0 20px 60px rgba(0, 20, 40, 0.12), 0 8px 24px rgba(0, 20, 40, 0.06);
+            padding: 40px 36px 32px;
+            transition: all 0.2s ease;
+        }
+
+        @media (max-width: 520px) {
+            .container {
+                padding: 24px 18px 20px;
+                border-radius: 20px;
+            }
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 8px;
+        }
+
+        .header-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #1a3a6b, #2d5aa0);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            color: #fff;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(26, 58, 107, 0.30);
+        }
+
+        .header-text h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0b1e33;
+            letter-spacing: -0.3px;
+            line-height: 1.2;
+        }
+
+        .header-text p {
+            font-size: 15px;
+            color: #5b6f87;
+            margin-top: 2px;
+            font-weight: 400;
+        }
+
+        .badge-safe {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #e6f0fa;
+            color: #1a4a7a;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 5px 14px 5px 12px;
+            border-radius: 30px;
+            margin-top: 6px;
+            margin-bottom: 22px;
+            border: 1px solid rgba(26, 74, 122, 0.10);
+        }
+
+        .badge-safe span {
+            font-size: 16px;
+        }
+
+        .upload-zone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 20px;
+            padding: 48px 24px 44px;
+            text-align: center;
+            background: #fafcff;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .upload-zone:hover {
+            border-color: #2d5aa0;
+            background: #f5f9ff;
+        }
+
+        .upload-zone.dragover {
+            border-color: #2d5aa0;
+            background: #eef4fe;
+            box-shadow: 0 0 0 4px rgba(45, 90, 160, 0.10);
+        }
+
+        .upload-zone .icon-upload {
+            font-size: 52px;
+            display: block;
+            margin-bottom: 12px;
+            line-height: 1;
+        }
+
+        .upload-zone h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0b1e33;
+            margin-bottom: 6px;
+        }
+
+        .upload-zone p {
+            color: #6b7f99;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .upload-zone .hint {
+            font-size: 13px;
+            color: #8a9db5;
+            margin-top: 8px;
+        }
+
+        .upload-zone .hint kbd {
+            background: #eef2f6;
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: inherit;
+            color: #1a3a5a;
+            border: 1px solid #dce3ec;
+        }
+
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .loader {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            padding: 24px 0 16px;
+        }
+
+        .loader.active {
+            display: flex;
+        }
+
+        .loader .spinner {
+            width: 32px;
+            height: 32px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #2d5aa0;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loader span {
+            color: #1a3a5a;
+            font-weight: 500;
+            font-size: 15px;
+        }
+
+        .result-area {
+            display: none;
+            margin-top: 28px;
+            animation: fadeUp 0.4s ease;
+        }
+
+        .result-area.active {
+            display: block;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        .result-header .status-icon {
+            width: 36px;
+            height: 36px;
+            background: #d1fae5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #0b7a4a;
+            flex-shrink: 0;
+        }
+
+        .result-header .status-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0b1e33;
+        }
+
+        .result-header .status-sub {
+            font-size: 14px;
+            color: #5b6f87;
+            font-weight: 400;
+        }
+
+        .secret-card {
+            background: #f7faff;
+            border-radius: 16px;
+            padding: 18px 20px 16px;
+            border: 1px solid #e6edf6;
+            margin-bottom: 20px;
+        }
+
+        .secret-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 600;
+            color: #3a5a7a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .secret-label .copy-btn {
+            background: none;
+            border: none;
+            color: #2d5aa0;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 8px;
+            transition: background 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .secret-label .copy-btn:hover {
+            background: #e6f0fa;
+        }
+
+        .secret-label .copy-btn.copied {
+            color: #0b7a4a;
+        }
+
+        .secret-value {
+            font-family: "SF Mono", "Menlo", "Monaco", "Cascadia Code", "Roboto Mono", monospace;
+            font-size: 26px;
+            font-weight: 600;
+            color: #0b1e33;
+            letter-spacing: 1.5px;
+            word-break: break-all;
+            background: #ffffff;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #e6edf6;
+            line-height: 1.4;
+            user-select: all;
+        }
+
+        @media (max-width: 520px) {
+            .secret-value {
+                font-size: 20px;
+                padding: 10px 12px;
+                letter-spacing: 1px;
+            }
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 6px;
+        }
+
+        @media (max-width: 480px) {
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .detail-item {
+            background: #fafcff;
+            border-radius: 12px;
+            padding: 12px 16px;
+            border: 1px solid #edf2f7;
+        }
+
+        .detail-item .label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #6b7f99;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .detail-item .value {
+            font-size: 16px;
+            font-weight: 500;
+            color: #0b1e33;
+            margin-top: 4px;
+            word-break: break-all;
+        }
+
+        .detail-item .value.mono {
+            font-family: "SF Mono", "Menlo", "Monaco", monospace;
+            font-size: 14px;
+        }
+
+        .detail-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .detail-item .value .tag {
+            display: inline-block;
+            background: #e6edf6;
+            padding: 0 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #1a4a7a;
+        }
+
+        .uri-box {
+            margin-top: 16px;
+            background: #f2f6fc;
+            border-radius: 12px;
+            padding: 12px 16px;
+            border: 1px solid #e6edf6;
+        }
+
+        .uri-box .label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #6b7f99;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 4px;
+        }
+
+        .uri-box .uri-value {
+            font-family: "SF Mono", "Menlo", "Monaco", monospace;
+            font-size: 13px;
+            color: #1a3a5a;
+            word-break: break-all;
+            line-height: 1.6;
+            opacity: 0.85;
+        }
+
+        .error-msg {
+            display: none;
+            margin-top: 20px;
+            background: #fef2f2;
+            border-radius: 14px;
+            padding: 16px 20px;
+            border-left: 4px solid #dc2626;
+            color: #7f1d1d;
+        }
+
+        .error-msg.active {
+            display: block;
+            animation: fadeUp 0.3s ease;
+        }
+
+        .error-msg .error-icon {
+            font-size: 20px;
+            margin-right: 10px;
+        }
+
+        .error-msg .error-text {
+            font-weight: 500;
+        }
+        .error-msg .error-detail {
+            font-size: 14px;
+            margin-top: 4px;
+            opacity: 0.8;
+        }
+
+        .manual-toggle {
+            margin-top: 18px;
+            text-align: center;
+        }
+
+        .manual-toggle button {
+            background: none;
+            border: none;
+            color: #4a6f96;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 6px 16px;
+            border-radius: 20px;
+            transition: background 0.15s ease;
+            text-decoration: underline dotted #8a9db5;
+            text-underline-offset: 4px;
+        }
+
+        .manual-toggle button:hover {
+            background: #eef2f6;
+        }
+
+        .manual-input-area {
+            display: none;
+            margin-top: 14px;
+            padding: 16px 18px 18px;
+            background: #f8faff;
+            border-radius: 16px;
+            border: 1px solid #e6edf6;
+        }
+
+        .manual-input-area.active {
+            display: block;
+            animation: fadeUp 0.3s ease;
+        }
+
+        .manual-input-area label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1a3a5a;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .manual-input-area .input-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .manual-input-area input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 14px;
+            border: 1.5px solid #dce3ec;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: "SF Mono", "Menlo", monospace;
+            background: #ffffff;
+            transition: border 0.2s ease;
+            outline: none;
+            color: #0b1e33;
+        }
+
+        .manual-input-area input:focus {
+            border-color: #2d5aa0;
+            box-shadow: 0 0 0 3px rgba(45, 90, 160, 0.12);
+        }
+
+        .manual-input-area .btn-parse {
+            padding: 10px 24px;
+            background: #2d5aa0;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.1s ease;
+            white-space: nowrap;
+        }
+
+        .manual-input-area .btn-parse:hover {
+            background: #1f4a85;
+        }
+
+        .manual-input-area .btn-parse:active {
+            transform: scale(0.97);
+        }
+
+        .footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid #edf2f7;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .footer .safe-note {
+            font-size: 13px;
+            color: #6b7f99;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer .safe-note span {
+            font-size: 18px;
+        }
+
+        .footer .reset-btn {
+            background: none;
+            border: none;
+            color: #8a9db5;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 8px;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+
+        .footer .reset-btn:hover {
+            background: #eef2f6;
+            color: #4a6f96;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-8 {
+            margin-top: 8px;
+        }
+
+        .paste-toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: #1a2a3a;
+            color: #f0f4f8;
+            padding: 10px 22px;
+            border-radius: 14px;
+            font-size: 14px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.4s ease;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .paste-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" role="main">
+        <!-- 头部 -->
+        <div class="header">
+            <div class="header-icon" aria-hidden="true">🔐</div>
+            <div class="header-text">
+                <h1>备用密钥提取</h1>
+                <p>从 2FA 二维码中提取 Secret 密钥</p>
+            </div>
+        </div>
+
+        <div class="badge-safe">
+            <span>🛡️</span> 全部在本地处理 · 数据不上传
+        </div>
+
+        <!-- 上传区域 -->
+        <div class="upload-zone" id="uploadZone">
+            <span class="icon-upload" aria-hidden="true">📷</span>
+            <h3>上传二维码图片</h3>
+            <p>点击选择或拖拽图片至此</p>
+            <div class="hint">
+                支持 PNG · JPG · WebP · GIF · BMP &nbsp;·&nbsp            </div>
+            <input type="file" id="fileInput" accept="image/*" />
+        </div>
+
+        <!-- 加载动画 -->
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <span>正在识别二维码…</span>
+        </div>
+
+        <!-- 错误信息 -->
+        <div class="error-msg" id="errorMsg">
+            <div>
+                <span class="error-icon">⚠️</span>
+                <span class="error-text" id="errorText">解码失败</span>
+                <div class="error-detail" id="errorDetail">请尝试其他图片</div>
+            </div>
+        </div>
+
+        <!-- 结果区域 -->
+        <div class="result-area" id="resultArea">
+            <div class="result-header">
+                <div class="status-icon">✅</div>
+                <div>
+                    <div class="status-title">解码成功</div>
+                    <div class="status-sub">已从二维码中提取以下信息</div>
+                </div>
+            </div>
+
+            <div class="secret-card">
+                <div class="secret-label">
+                    <span>🔑 备用密钥 (Secret)</span>
+                    <button class="copy-btn" id="copyBtn" title="复制密钥">
+                        <span>📋</span> 复制
+                    </button>
+                </div>
+                <div class="secret-value" id="secretValue">—</div>
+            </div>
+
+            <div class="detail-grid" id="detailGrid"></div>
+
+            <div class="uri-box" id="uriBox">
+                <div class="label">📄 完整 URI</div>
+                <div class="uri-value" id="uriValue">—</div>
+            </div>
+        </div>
+
+        <div class="manual-input-area" id="manualArea">
+            <label for="manualInput">输入 OTP URI 或纯 Secret 密钥</label>
+            <div class="input-row">
+                <input type="text" id="manualInput" placeholder="例如：otpauth://totp/... 或 JBSWY3DPEHPK3PXP" />
+                <button class="btn-parse" id="manualParseBtn">解析</button>
+            </div>
+        </div>
+
+        <!-- 页脚 -->
+        <div class="footer">
+            <button class="reset-btn" id="resetBtn">🔄 重新开始</button>
+        </div>
+    </div>
+
+    <!-- 粘贴提示 -->
+    <div class="paste-toast" id="pasteToast">📋 已检测到图片，正在解码…</div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ---- DOM 引用 ----
+            const uploadZone = document.getElementById('uploadZone');
+            const fileInput = document.getElementById('fileInput');
+            const loader = document.getElementById('loader');
+            const resultArea = document.getElementById('resultArea');
+            const errorMsg = document.getElementById('errorMsg');
+            const errorText = document.getElementById('errorText');
+            const errorDetail = document.getElementById('errorDetail');
+            const secretValue = document.getElementById('secretValue');
+            const detailGrid = document.getElementById('detailGrid');
+            const uriValue = document.getElementById('uriValue');
+            const copyBtn = document.getElementById('copyBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const manualToggleBtn = document.getElementById('manualToggleBtn');
+            const manualArea = document.getElementById('manualArea');
+            const manualInput = document.getElementById('manualInput');
+            const manualParseBtn = document.getElementById('manualParseBtn');
+            const pasteToast = document.getElementById('pasteToast');
+
+            // ---- 状态 ----
+            let currentSecret = '';
+            let currentUri = '';
+
+            // ---- 工具函数 ----
+            function show(el) { el.classList.add('active'); }
+
+            function hide(el) { el.classList.remove('active'); }
+
+            function showError(msg, detail) {
+                errorText.textContent = msg || '解码失败';
+                errorDetail.textContent = detail || '请尝试其他图片或手动输入密钥';
+                show(errorMsg);
+                hide(resultArea);
+            }
+
+            function hideError() { hide(errorMsg); }
+
+            function showResult(data) {
+                hideError();
+                hide(loader);
+                show(resultArea);
+                renderResult(data);
+            }
+
+            function resetAll() {
+                hide(resultArea);
+                hide(errorMsg);
+                hide(loader);
+                hide(manualArea);
+                currentSecret = '';
+                currentUri = '';
+                fileInput.value = '';
+                manualInput.value = '';
+                copyBtn.textContent = '📋 复制';
+                copyBtn.classList.remove('copied');
+                secretValue.textContent = '—';
+                uriValue.textContent = '—';
+                detailGrid.innerHTML = '';
+                uploadZone.classList.remove('dragover');
+            }
+
+            // ---- 粘贴提示 ----
+            let toastTimer = null;
+
+            function showPasteToast(msg) {
+                pasteToast.textContent = msg || '📋 已检测到图片，正在解码…';
+                pasteToast.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => {
+                    pasteToast.classList.remove('show');
+                }, 2000);
+            }
+
+            // ---- 解析 OTP URI (纯前端) ----
+            function parseOTPURI(uri) {
+                const result = {
+                    type: 'unknown',
+                    issuer: '',
+                    account: '',
+                    secret: '',
+                    algorithm: 'SHA1',
+                    digits: '6',
+                    period: '30',
+                    counter: null,
+                    raw: uri,
+                    valid: false,
+                };
+
+                // 尝试解析为 URI
+                let match = uri.match(/^otpauth:\/\/([a-zA-Z]+)\/([^?]+)\?(.*)$/);
+                if (!match) {
+                    // 如果不是 URI 格式，尝试作为纯 secret
+                    const cleaned = uri.replace(/\s/g, '').toUpperCase();
+                    if (/^[A-Z2-7]+=*$/.test(cleaned) && cleaned.length >= 12) {
+                        result.secret = cleaned;
+                        result.valid = true;
+                        result.type = 'secret-only';
+                        return result;
+                    }
+                    return result;
+                }
+
+                result.type = match[1].toLowerCase();
+                const label = match[2];
+                const params = new URLSearchParams(match[3]);
+
+                const labelParts = label.split(':');
+                if (labelParts.length === 2) {
+                    result.issuer = decodeURIComponent(labelParts[0]);
+                    result.account = decodeURIComponent(labelParts[1]);
+                } else {
+                    result.account = decodeURIComponent(label);
+                }
+
+                const secretParam = params.get('secret');
+                if (secretParam) {
+                    result.secret = secretParam.toUpperCase().replace(/\s/g, '');
+                }
+
+                const issuerParam = params.get('issuer');
+                if (issuerParam && !result.issuer) {
+                    result.issuer = decodeURIComponent(issuerParam);
+                }
+                if (issuerParam) {
+                    result.issuer = decodeURIComponent(issuerParam);
+                }
+
+                const algo = params.get('algorithm');
+                if (algo) result.algorithm = algo.toUpperCase();
+
+                const digits = params.get('digits');
+                if (digits) result.digits = digits;
+
+                const period = params.get('period');
+                if (period) result.period = period;
+
+                const counter = params.get('counter');
+                if (counter) result.counter = parseInt(counter, 10);
+
+                if (result.secret && result.secret.length >= 12) {
+                    result.valid = true;
+                }
+
+                return result;
+            }
+
+            // ---- 渲染结果 ----
+            function renderResult(data) {
+                const { type, issuer, account, secret, algorithm, digits, period, counter, raw } = data;
+
+                currentSecret = secret || '';
+                currentUri = raw || '';
+
+                secretValue.textContent = secret || '（未找到密钥）';
+                uriValue.textContent = raw || '（无 URI）';
+
+                const items = [];
+
+                let typeLabel = type === 'totp' ? '⏱️ TOTP (基于时间)' :
+                    type === 'hotp' ? '🔢 HOTP (基于计数器)' :
+                    type === 'secret-only' ? '🔑 纯密钥' :
+                    '❓ 未知';
+                items.push({ label: '类型', value: typeLabel });
+
+                if (issuer) items.push({ label: '发行者', value: issuer });
+                if (account) items.push({ label: '账户', value: account });
+                if (type !== 'secret-only' && algorithm) {
+                    items.push({ label: '算法', value: algorithm });
+                }
+                if (type !== 'secret-only' && digits) {
+                    items.push({ label: '密码位数', value: digits + ' 位' });
+                }
+                if (type === 'totp' && period) {
+                    items.push({ label: '周期', value: period + ' 秒' });
+                }
+                if (type === 'hotp' && counter !== null) {
+                    items.push({ label: '计数器', value: String(counter) });
+                }
+                if (!issuer && !account && type !== 'secret-only') {
+                    items.push({ label: '备注', value: '仅包含密钥，无发行者/账户信息' });
+                }
+
+                detailGrid.innerHTML = '';
+                items.forEach((item) => {
+                    const div = document.createElement('div');
+                    div.className = 'detail-item';
+                    if (item.label === '备注' || item.label === '完整 URI') {
+                        div.classList.add('full-width');
+                    }
+                    div.innerHTML = `
+                        <div class="label">${item.label}</div>
+                        <div class="value">${item.value}</div>
+                    `;
+                    detailGrid.appendChild(div);
+                });
+
+                if (items.length === 0) {
+                    detailGrid.innerHTML = `
+                        <div class="detail-item full-width">
+                            <div class="label">信息</div>
+                            <div class="value">未能解析出详细信息</div>
+                        </div>
+                    `;
+                }
+
+                resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            // ---- 处理解码结果 ----
+            function handleDecodedText(text) {
+                const parsed = parseOTPURI(text);
+                if (parsed.valid) {
+                    showResult(parsed);
+                    return true;
+                } else {
+                    const cleaned = text.replace(/\s/g, '').toUpperCase();
+                    if (cleaned.length >= 12 && /^[A-Z2-7]+=*$/.test(cleaned)) {
+                        const fallback = {
+                            type: 'secret-only',
+                            issuer: '',
+                            account: '',
+                            secret: cleaned,
+                            algorithm: '',
+                            digits: '',
+                            period: '',
+                            counter: null,
+                            raw: text,
+                            valid: true,
+                        };
+                        showResult(fallback);
+                        return true;
+                    }
+                    showError('无法解析二维码内容', '内容不是有效的 OTP URI 或密钥格式');
+                    return false;
+                }
+            }
+
+            // ---- 调用 Python 解码图片 ----
+            function decodeImageWithPython(dataUrl) {
+                // 使用 pywebview.api 调用 Python 方法
+                if (window.pywebview && window.pywebview.api && window.pywebview.api.decode_qr_from_image) {
+                    window.pywebview.api.decode_qr_from_image(dataUrl)
+                        .then(function(result) {
+                            hide(loader);
+                            if (result) {
+                                handleDecodedText(result);
+                            } else {
+                                showError('未识别到二维码', '请尝试其他图片或手动输入密钥');
+                            }
+                        })
+                        .catch(function(err) {
+                            hide(loader);
+                            console.error('Python 调用失败:', err);
+                            showError('解码失败', '请确保 Python 后端正常运行，或尝试手动输入');
+                        });
+                } else {
+                    // 降级：如果 pywebview 不可用（比如直接打开 HTML），使用前端 jsQR 解码（但本页面未引用 jsQR，所以会失败）
+                    hide(loader);
+                    showError('环境错误', '本工具需在 PyWebView 桌面应用中运行');
+                }
+            }
+
+            // ---- 处理文件 ----
+            function processFile(file) {
+                if (!file || !file.type.startsWith('image/')) {
+                    showError('请上传图片文件', '支持 PNG、JPG、WebP、GIF、BMP 等格式');
+                    return;
+                }
+
+                hideError();
+                hide(resultArea);
+                show(loader);
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const dataUrl = e.target.result;
+                    // 调用 Python 解码
+                    decodeImageWithPython(dataUrl);
+                };
+                reader.onerror = function() {
+                    hide(loader);
+                    showError('文件读取失败', '请重试或选择其他图片');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // ---- 处理粘贴 ----
+            function handlePaste(e) {
+                const items = e.clipboardData && e.clipboardData.items;
+                if (!items) return;
+
+                let imageItem = null;
+                for (const item of items) {
+                    if (item.type.startsWith('image/')) {
+                        imageItem = item;
+                        break;
+                    }
+                }
+
+                if (imageItem) {
+                    showPasteToast('📋 已检测到图片，正在解码…');
+                    const file = imageItem.getAsFile();
+                    processFile(file);
+                    e.preventDefault();
+                }
+            }
+
+            // ---- 手动输入解析 ----
+            function parseManualInput() {
+                const input = manualInput.value.trim();
+                if (!input) {
+                    showError('请输入内容', '请输入 OTP URI 或纯密钥文本');
+                    return;
+                }
+
+                hideError();
+                hide(resultArea);
+                show(loader);
+
+                // 模拟异步（实际上立即解析）
+                setTimeout(() => {
+                    hide(loader);
+                    const parsed = parseOTPURI(input);
+                    if (parsed.valid) {
+                        showResult(parsed);
+                        hide(manualArea);
+                        manualToggleBtn.textContent = '✏️ 无法识别？手动输入密钥';
+                    } else {
+                        showError('无法解析输入', '请输入有效的 OTP URI 或 Base32 密钥');
+                    }
+                }, 300);
+            }
+
+            // ---- 复制 ----
+            function copySecret() {
+                const text = currentSecret || secretValue.textContent;
+                if (!text || text === '—') {
+                    alert('没有可复制的密钥');
+                    return;
+                }
+
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        showCopyFeedback();
+                    }).catch(() => {
+                        fallbackCopy(text);
+                    });
+                } else {
+                    fallbackCopy(text);
+                }
+            }
+
+            function fallbackCopy(text) {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                ta.style.left = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                try {
+                    document.execCommand('copy');
+                    showCopyFeedback();
+                } catch (e) {
+                    alert('复制失败，请手动复制密钥');
+                }
+                document.body.removeChild(ta);
+            }
+
+            function showCopyFeedback() {
+                copyBtn.textContent = '✅ 已复制';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.textContent = '📋 复制';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            }
+
+            // ---- 事件绑定 ----
+            fileInput.addEventListener('change', function(e) {
+                if (this.files && this.files.length > 0) {
+                    processFile(this.files[0]);
+                }
+                this.value = '';
+            });
+
+            uploadZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+
+            uploadZone.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+            });
+
+            uploadZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files && files.length > 0) {
+                    const file = files[0];
+                    if (file.type.startsWith('image/')) {
+                        processFile(file);
+                    } else {
+                        showError('请拖拽图片文件', '不支持此文件类型');
+                    }
+                }
+            });
+
+            uploadZone.addEventListener('click', function(e) {
+                if (e.target.tagName !== 'INPUT') {
+                    fileInput.click();
+                }
+            });
+
+            document.addEventListener('paste', handlePaste);
+
+            copyBtn.addEventListener('click', copySecret);
+
+            resetBtn.addEventListener('click', function() {
+                resetAll();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+            manualToggleBtn.addEventListener('click', function() {
+                const isActive = manualArea.classList.contains('active');
+                if (isActive) {
+                    hide(manualArea);
+                    this.textContent = '✏️ 无法识别？手动输入密钥';
+                } else {
+                    show(manualArea);
+                    this.textContent = '✖ 收起手动输入';
+                    manualInput.focus();
+                }
+            });
+
+            manualParseBtn.addEventListener('click', parseManualInput);
+            manualInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    parseManualInput();
+                }
+            });
+
+            // ---- 初始化 ----
+            resetAll();
+
+            if (!window.pywebview) {
+                console.warn('pywebview 未加载，请确保在 PyWebView 环境中运行');
+                // 可以提示用户，但不影响手动输入
+            }
+
+            console.log('🔐 2FA 备用密钥提取工具已加载 (PyWebView 版本)');
+        })();
+    </script>
+</body>
+</html>

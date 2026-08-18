@@ -1,4 +1,4 @@
-156-2FA-QR_code-Identification
+# 156-2FA-QR_code-Identification
 
 用于无法识别双因素认证（2FA）二维码的设备或软件
 
@@ -6,7 +6,7 @@
 
 ---
 
-🎯 项目背景
+## 🎯 项目背景
 
 许多网站开启两步验证（2FA）时，会提供一个二维码供认证器应用（如 Google Authenticator、Microsoft Authenticator 等）扫描绑定。然而，部分设备或软件不支持直接扫描二维码，导致用户无法完成绑定。
 
@@ -14,7 +14,7 @@
 
 ---
 
-✨ 功能特性
+## ✨ 功能特性
 
 · 📷 上传二维码图片：支持从本地选择 2FA 二维码图片
 · 🔍 自动解码识别：使用 OpenCV 二维码检测器解码二维码内容
@@ -24,7 +24,7 @@
 
 ---
 
-🛠️ 技术栈
+## 🛠️ 技术栈
 
 组件 技术
 后端 Python + PyWebView
@@ -34,16 +34,16 @@
 
 ---
 
-📦 安装与运行
+## 📦 安装与运行
 
-1. 克隆仓库
+### 1. 克隆仓库
 
 ```bash
 git clone https://github.com/bCreeper156/156-2FA-QR_code-Identification.git
 cd 156-2FA-QR_code-Identification
 ```
 
-2. 安装依赖
+### 2. 安装依赖
 
 建议使用虚拟环境：
 
@@ -57,7 +57,7 @@ pip install -r requirements.txt
 · opencv-python >= 4.8 — 二维码解码
 · Pillow >= 10.0 — 图像处理
 
-3. 启动应用
+### 3. 启动应用
 
 ```bash
 python main.py
@@ -65,7 +65,7 @@ python main.py
 
 ---
 
-🚀 使用方法
+## 🚀 使用方法
 
 1. 运行 python main.py 启动图形界面窗口
 2. 点击界面上的上传按钮，选择包含 2FA 二维码的图片
@@ -74,7 +74,7 @@ python main.py
 
 ---
 
-📁 项目结构
+## 📁 项目结构
 
 ```
 156-2FA-QR_code-Identification/
@@ -87,7 +87,7 @@ python main.py
 
 ---
 
-📄 许可证
+## 📄 许可证
 
 本项目采用 MIT License 开源协议。
 
@@ -95,12 +95,12 @@ Copyright (c) 2026 bCreeper156
 
 ---
 
-🤝 贡献
+## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！
 
 ---
 
-⚠️ 免责声明
+## ⚠️ 免责声明
 
 本工具仅供学习和辅助用途，请勿用于非法目的。使用本工具提取的密钥请妥善保管，避免泄露导致账户安全风险。

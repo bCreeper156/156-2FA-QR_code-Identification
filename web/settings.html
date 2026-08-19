@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>主题设置 · Material</title>
+
+    <!-- Google Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0,1" />
+
+    <style id="theme-styles">
+        /* ===== 颜色主题变量 ===== */
+        :root {
+            --md-primary: #1A73E8;
+            --md-on-primary: #FFFFFF;
+            --md-primary-container: #D2E3FC;
+            --md-on-primary-container: #041E49;
+        }
+
+        /* ===== 亮色模式（默认） ===== */
+        :root,
+        body.light-mode {
+            --md-surface: #FFFFFF;
+            --md-surface-variant: #F1F4F9;
+            --md-outline: #D3D9E3;
+            --md-on-surface: #1E293B;
+            --md-on-surface-variant: #475569;
+            --md-background: #F6F9FC;
+            --md-shadow: 0 8px 30px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.03);
+            --md-card-shadow: 0 8px 30px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.03);
+        }
+
+        /* ===== 暗色模式 ===== */
+        body.dark-mode {
+            --md-surface: #2C2C2C;
+            --md-surface-variant: #3A3A3A;
+            --md-outline: #5A5A5A;
+            --md-on-surface: #E8E8E8;
+            --md-on-surface-variant: #B0B0B0;
+            --md-background: #1A1A1A;
+            --md-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            --md-card-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+            --md-primary-container: #1E3A5F;
+            --md-on-primary-container: #E3F0FF;
+            --md-on-primary: #0B1E33;
+        }
+        body.dark-mode .btn-primary {
+            color: var(--md-on-primary);
+        }
+        body.dark-mode .theme-option {
+            background: var(--md-surface-variant);
+        }
+        body.dark-mode .theme-option.active {
+            background: var(--md-primary-container);
+            border-color: var(--md-primary);
+        }
+        body.dark-mode .card {
+            background: var(--md-surface);
+            box-shadow: var(--md-card-shadow);
+        }
+        body.dark-mode .header-right a {
+            color: var(--md-on-surface-variant);
+        }
+        body.dark-mode .header-right a:hover {
+            background: var(--md-surface-variant);
+        }
+    </style>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+            background: var(--md-background);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            color: var(--md-on-surface);
+            transition: background 0.25s, color 0.25s;
+        }
+
+        .card {
+            max-width: 480px;
+            width: 100%;
+            background: var(--md-surface);
+            border-radius: 24px;
+            padding: 32px 28px 36px;
+            box-shadow: var(--md-card-shadow);
+            transition: background 0.25s, box-shadow 0.25s;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header-left h1 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: var(--md-on-surface);
+            margin: 0;
+        }
+        .header-left .material-symbols-outlined {
+            font-size: 32px;
+            color: var(--md-primary);
+        }
+        .header-right a {
+            color: var(--md-on-surface-variant);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 40px;
+            transition: background 0.2s;
+        }
+        .header-right a:hover {
+            background: var(--md-surface-variant);
+        }
+        .header-right .material-symbols-outlined {
+            font-size: 22px;
+        }
+
+        .subhead {
+            margin-bottom: 28px;
+            color: var(--md-on-surface-variant);
+            font-size: 15px;
+        }
+
+        /* ===== 设置分组 ===== */
+        .settings-group {
+            margin-bottom: 28px;
+        }
+        .settings-group-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--md-on-surface);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .settings-group-title .material-symbols-outlined {
+            font-size: 20px;
+            color: var(--md-primary);
+        }
+
+        /* ===== 颜色主题网格 ===== */
+        .theme-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+        .theme-option {
+            background: var(--md-surface-variant);
+            border-radius: 16px;
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s, background 0.2s, transform 0.1s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .theme-option:hover {
+            background: var(--md-primary-container);
+        }
+        .theme-option:active {
+            transform: scale(0.96);
+        }
+        .theme-option.active {
+            border-color: var(--md-primary);
+            background: var(--md-primary-container);
+        }
+        .theme-option .color-preview {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 2px solid var(--md-surface);
+        }
+        .theme-option .theme-name {
+            font-weight: 500;
+            font-size: 13px;
+            color: var(--md-on-surface);
+        }
+        .theme-option .check-mark {
+            color: var(--md-primary);
+            font-size: 18px;
+            display: none;
+        }
+        .theme-option.active .check-mark {
+            display: inline;
+        }
+
+        /* ===== 外观模式选择 ===== */
+        .mode-selector {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .mode-option {
+            flex: 1;
+            min-width: 80px;
+            background: var(--md-surface-variant);
+            border-radius: 40px;
+            padding: 10px 16px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s, background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--md-on-surface-variant);
+        }
+        .mode-option:hover {
+            background: var(--md-primary-container);
+        }
+        .mode-option.active {
+            border-color: var(--md-primary);
+            background: var(--md-primary-container);
+            color: var(--md-on-primary-container);
+        }
+        .mode-option .material-symbols-outlined {
+            font-size: 20px;
+        }
+
+        /* ===== 应用按钮 ===== */
+        .action-row {
+            text-align: center;
+            margin-top: 12px;
+        }
+        .btn-primary {
+            background: var(--md-primary);
+            border: none;
+            border-radius: 40px;
+            color: var(--md-on-primary);
+            padding: 12px 32px;
+            font-weight: 600;
+            font-size: 15px;
+            font-family: 'Roboto', sans-serif;
+            cursor: pointer;
+            transition: 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .btn-primary:hover {
+            background: var(--md-on-primary-container);
+            color: var(--md-primary-container);
+        }
+        .btn-primary:active {
+            transform: scale(0.96);
+        }
+        .btn-primary .material-symbols-outlined {
+            font-size: 20px;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 500px) {
+            .card {
+                padding: 20px 16px 28px;
+            }
+            .header-left h1 {
+                font-size: 22px;
+            }
+            .theme-grid {
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 8px;
+            }
+            .mode-selector {
+                flex-direction: row;
+            }
+            .mode-option {
+                min-width: 60px;
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <!-- 头部 -->
+        <div class="header">
+            <div class="header-left">
+                <span class="material-symbols-outlined">palette</span>
+                <h1>主题设置</h1>
+            </div>
+            <div class="header-right">
+                <a href="index.html">
+                    <span class="material-symbols-outlined">arrow_back</span> 返回
+                </a>
+            </div>
+        </div>
+        <div class="subhead">自定义颜色主题与外观模式</div>
+
+        <!-- ===== 颜色主题 ===== -->
+        <div class="settings-group">
+            <div class="settings-group-title">
+                <span class="material-symbols-outlined">color_lens</span> 颜色主题
+            </div>
+            <div class="theme-grid" id="themeGrid">
+                <div class="theme-option active" data-theme="blue">
+                    <div class="color-preview" style="background: #1A73E8;"></div>
+                    <span class="theme-name">蓝色</span>
+                    <span class="material-symbols-outlined check-mark">check_circle</span>
+                </div>
+                <div class="theme-option" data-theme="purple">
+                    <div class="color-preview" style="background: #7C3AED;"></div>
+                    <span class="theme-name">紫色</span>
+                    <span class="material-symbols-outlined check-mark">check_circle</span>
+                </div>
+                <div class="theme-option" data-theme="pink">
+                    <div class="color-preview" style="background: #D81B60;"></div>
+                    <span class="theme-name">粉色</span>
+                    <span class="material-symbols-outlined check-mark">check_circle</span>
+                </div>
+                <div class="theme-option" data-theme="green">
+                    <div class="color-preview" style="background: #0F7B3A;"></div>
+                    <span class="theme-name">绿色</span>
+                    <span class="material-symbols-outlined check-mark">check_circle</span>
+                </div>
+                <div class="theme-option" data-theme="orange">
+                    <div class="color-preview" style="background: #E65100;"></div>
+                    <span class="theme-name">橙色</span>
+                    <span class="material-symbols-outlined check-mark">check_circle</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 外观模式 ===== -->
+        <div class="settings-group">
+            <div class="settings-group-title">
+                <span class="material-symbols-outlined">brightness_medium</span> 外观模式
+            </div>
+            <div class="mode-selector" id="modeSelector">
+                <div class="mode-option" data-mode="light">
+                    <span class="material-symbols-outlined">light_mode</span> 亮色
+                </div>
+                <div class="mode-option" data-mode="dark">
+                    <span class="material-symbols-outlined">dark_mode</span> 暗色
+                </div>
+                <div class="mode-option active" data-mode="auto">
+                    <span class="material-symbols-outlined">auto_awesome</span> 自动
+                </div>
+            </div>
+        </div>
+
+        <!-- 应用按钮 -->
+        <div class="action-row">
+            <button class="btn-primary" id="applyBtn">
+                <span class="material-symbols-outlined">check</span> 应用并返回
+            </button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ===== 颜色主题定义 =====
+            const colorThemes = {
+                blue: { primary: '#1A73E8', onPrimary: '#FFFFFF', primaryContainer: '#D2E3FC', onPrimaryContainer: '#041E49' },
+                purple: { primary: '#7C3AED', onPrimary: '#FFFFFF', primaryContainer: '#E4D7F5', onPrimaryContainer: '#2D1B4E' },
+                pink: { primary: '#D81B60', onPrimary: '#FFFFFF', primaryContainer: '#F8D4E0', onPrimaryContainer: '#4A0D24' },
+                green: { primary: '#0F7B3A', onPrimary: '#FFFFFF', primaryContainer: '#C8E6C9', onPrimaryContainer: '#052E14' },
+                orange: { primary: '#E65100', onPrimary: '#FFFFFF', primaryContainer: '#FDE0C8', onPrimaryContainer: '#4A1A00' }
+            };
+
+            // ===== 应用颜色主题 =====
+            function applyColorTheme(themeName) {
+                const root = document.documentElement;
+                const theme = colorThemes[themeName] || colorThemes.blue;
+                root.style.setProperty('--md-primary', theme.primary);
+                root.style.setProperty('--md-on-primary', theme.onPrimary);
+                root.style.setProperty('--md-primary-container', theme.primaryContainer);
+                root.style.setProperty('--md-on-primary-container', theme.onPrimaryContainer);
+                // 更新高亮状态
+                document.querySelectorAll('.theme-option').forEach(el => {
+                    el.classList.toggle('active', el.dataset.theme === themeName);
+                });
+                localStorage.setItem('md3_color_theme', themeName);
+            }
+
+            // ===== 应用外观模式 =====
+            function applyAppearanceMode(mode) {
+                const body = document.body;
+                body.classList.remove('light-mode', 'dark-mode');
+                if (mode === 'auto') {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    body.classList.add(prefersDark ? 'dark-mode' : 'light-mode');
+                } else {
+                    body.classList.add(mode === 'dark' ? 'dark-mode' : 'light-mode');
+                }
+                // 更新高亮
+                document.querySelectorAll('.mode-option').forEach(el => {
+                    el.classList.toggle('active', el.dataset.mode === mode);
+                });
+                localStorage.setItem('md3_appearance_mode', mode);
+            }
+
+            // ===== 加载保存的设置 =====
+            function loadSettings() {
+                const colorTheme = localStorage.getItem('md3_color_theme') || 'blue';
+                const appearanceMode = localStorage.getItem('md3_appearance_mode') || 'auto';
+                applyColorTheme(colorTheme);
+                applyAppearanceMode(appearanceMode);
+            }
+
+            // ===== 监听系统变化（自动模式） =====
+            function startSystemListener() {
+                const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+                const handleChange = (e) => {
+                    const currentMode = localStorage.getItem('md3_appearance_mode') || 'auto';
+                    if (currentMode === 'auto') {
+                        document.body.classList.remove('light-mode', 'dark-mode');
+                        document.body.classList.add(e.matches ? 'dark-mode' : 'light-mode');
+                    }
+                };
+                mediaQuery.addEventListener('change', handleChange);
+            }
+
+            // 加载并监听
+            loadSettings();
+            startSystemListener();
+
+            // ===== 主题点击 =====
+            document.querySelectorAll('.theme-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const theme = this.dataset.theme;
+                    applyColorTheme(theme);
+                });
+            });
+
+            // ===== 模式点击 =====
+            document.querySelectorAll('.mode-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const mode = this.dataset.mode;
+                    applyAppearanceMode(mode);
+                });
+            });
+
+            // ===== 应用并返回 =====
+            document.getElementById('applyBtn').addEventListener('click', function() {
+                window.location.href = 'index.html';
+            });
+
+        })();
+    </script>
+</body>
+</html>

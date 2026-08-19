@@ -9,9 +9,22 @@ Copyright (c) 2026
 import webview
 import base64
 import io
+import os
+import sys
 import numpy as np
 from PIL import Image
 import cv2
+
+
+def resource_path(relative_path):
+    """获取资源的绝对路径，兼容开发环境和 PyInstaller 打包后"""
+    try:
+        # PyInstaller 打包后，资源会解压到 sys._MEIPASS 临时目录
+        base_path = sys._MEIPASS
+    except AttributeError:
+        # 开发环境下，使用当前工作目录
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 
 class Api:
@@ -58,13 +71,16 @@ class Api:
 
 if __name__ == '__main__':
     api = Api()
+    # 获取打包后 HTML 文件的实际路径
+    html_path = resource_path('web/index.html')
+    
     window = webview.create_window(
         title='2FA 备用密钥提取工具',
-        url='web/index.html',          # 前端页面位置
+        url=html_path,          # 使用动态获取的路径
         width=820,
         height=950,
         resizable=True,
-        js_api=api,                    # 将 Api 实例注入前端
-        confirm_close=True,            # 关闭时弹出确认框
+        js_api=api,
+        confirm_close=True,
     )
-    webview.start(debug=False)         # 开发时可设为 True 打开开发者工具
+    webview.start(debug=False)  # 开发时可设为 True 打开开发者工具

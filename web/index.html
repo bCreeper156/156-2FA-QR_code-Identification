@@ -3,214 +3,320 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>2FA 备用密钥提取工具</title>
+    <title>2FA 备用密钥提取 · Material</title>
+
+    <!-- Google Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0,1" />
+
+    <!-- jsQR 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js">
+    </script>
+
+    <style id="theme-styles">
+        /* ===== 颜色主题变量（只定义主色等，不定义背景） ===== */
+        :root {
+            --md-primary: #1A73E8;
+            --md-on-primary: #FFFFFF;
+            --md-primary-container: #D2E3FC;
+            --md-on-primary-container: #041E49;
+        }
+
+        /* ===== 亮色模式（默认） ===== */
+        :root,
+        body.light-mode {
+            --md-surface: #FFFFFF;
+            --md-surface-variant: #F1F4F9;
+            --md-outline: #D3D9E3;
+            --md-on-surface: #1E293B;
+            --md-on-surface-variant: #475569;
+            --md-background: #F6F9FC;
+            --md-shadow: 0 8px 30px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.03);
+            --md-card-shadow: 0 8px 30px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.03);
+        }
+
+        /* ===== 暗色模式 ===== */
+        body.dark-mode {
+            --md-surface: #2C2C2C;
+            --md-surface-variant: #3A3A3A;
+            --md-outline: #5A5A5A;
+            --md-on-surface: #E8E8E8;
+            --md-on-surface-variant: #B0B0B0;
+            --md-background: #1A1A1A;
+            --md-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            --md-card-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+            /* 调整主色容器与文字颜色以适配暗色 */
+            --md-primary-container: #1E3A5F;
+            --md-on-primary-container: #E3F0FF;
+            --md-on-primary: #0B1E33; /* 主色按钮上的文字在暗色下用深色 */
+        }
+        /* 暗色下主色按钮文字颜色修正 */
+        body.dark-mode .btn-primary,
+        body.dark-mode .badge-local {
+            color: var(--md-on-primary);
+        }
+        /* 暗色下上传区域背景微调 */
+        body.dark-mode .upload-zone {
+            background: var(--md-surface-variant);
+        }
+        body.dark-mode .upload-zone:hover {
+            background: var(--md-primary-container);
+        }
+        body.dark-mode .secret-value {
+            background: #3A3A3A;
+            color: var(--md-on-surface);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+        }
+        body.dark-mode .snackbar {
+            background: #3A3A3A;
+            color: #E8E8E8;
+        }
+        body.dark-mode .snackbar .material-symbols-outlined {
+            color: #81C784;
+        }
+        body.dark-mode .status-box.error {
+            background: #3D1F1E;
+            border-left-color: #EF5350;
+        }
+        body.dark-mode .status-box.success {
+            background: #1D3A2A;
+            border-left-color: #66BB6A;
+        }
+        body.dark-mode .uri-row {
+            border-color: var(--md-outline);
+        }
+        /* 设置页面卡片在暗色下 */
+        body.dark-mode .card {
+            background: var(--md-surface);
+            box-shadow: var(--md-card-shadow);
+        }
+        body.dark-mode .theme-option {
+            background: var(--md-surface-variant);
+        }
+        body.dark-mode .theme-option.active {
+            background: var(--md-primary-container);
+            border-color: var(--md-primary);
+        }
+        body.dark-mode .btn-secondary {
+            color: var(--md-on-surface-variant);
+            border-color: var(--md-outline);
+        }
+        body.dark-mode .btn-secondary:hover {
+            background: var(--md-surface-variant);
+        }
+        body.dark-mode .header-right a {
+            color: var(--md-on-surface-variant);
+        }
+        body.dark-mode .header-right a:hover {
+            background: var(--md-surface-variant);
+        }
+    </style>
+
     <style>
-        /* ===== 全局重置 & 字体 ===== */
-        *,
-        *::before,
-        *::after {
+        /* ===== 基础样式 ===== */
+        * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
-            background: #f0f4f8;
+            font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+            background: var(--md-background);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
             margin: 0;
+            color: var(--md-on-surface);
+            transition: background 0.25s, color 0.25s;
         }
 
-        .container {
-            max-width: 780px;
+        .card {
+            max-width: 640px;
             width: 100%;
-            background: #ffffff;
-            border-radius: 28px;
-            box-shadow: 0 20px 60px rgba(0, 20, 40, 0.12), 0 8px 24px rgba(0, 20, 40, 0.06);
-            padding: 40px 36px 32px;
-            transition: all 0.2s ease;
+            background: var(--md-surface);
+            border-radius: 24px;
+            padding: 32px 28px 36px;
+            box-shadow: var(--md-card-shadow);
+            transition: background 0.25s, box-shadow 0.25s;
         }
 
-        @media (max-width: 520px) {
-            .container {
-                padding: 24px 18px 20px;
-                border-radius: 20px;
-            }
-        }
-
+        /* ===== 头部 ===== */
         .header {
             display: flex;
             align-items: center;
-            gap: 14px;
-            margin-bottom: 8px;
+            justify-content: space-between;
+            margin-bottom: 4px;
         }
-
-        .header-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #1a3a6b, #2d5aa0);
-            border-radius: 16px;
+        .header-left {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 26px;
-            color: #fff;
-            flex-shrink: 0;
-            box-shadow: 0 4px 12px rgba(26, 58, 107, 0.30);
+            gap: 12px;
         }
-
-        .header-text h1 {
-            font-size: 24px;
+        .header-left h1 {
+            font-size: 28px;
             font-weight: 700;
-            color: #0b1e33;
             letter-spacing: -0.3px;
-            line-height: 1.2;
+            color: var(--md-on-surface);
+            margin: 0;
+        }
+        .header-left .material-symbols-outlined {
+            font-size: 32px;
+            color: var(--md-primary);
+        }
+        .header-right .material-symbols-outlined {
+            font-size: 28px;
+            color: var(--md-on-surface-variant);
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 50%;
+            transition: background 0.2s;
+            text-decoration: none;
+        }
+        .header-right .material-symbols-outlined:hover {
+            background: var(--md-surface-variant);
         }
 
-        .header-text p {
-            font-size: 15px;
-            color: #5b6f87;
+        .subhead {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-top: 2px;
+            margin-bottom: 28px;
+            color: var(--md-on-surface-variant);
+            font-size: 15px;
             font-weight: 400;
+            flex-wrap: wrap;
+            gap: 6px 0;
         }
-
-        .badge-safe {
+        .badge-local {
+            background: var(--md-primary-container);
+            color: var(--md-on-primary-container);
+            font-size: 13px;
+            font-weight: 500;
+            padding: 4px 16px;
+            border-radius: 40px;
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: #e6f0fa;
-            color: #1a4a7a;
-            font-size: 13px;
-            font-weight: 500;
-            padding: 5px 14px 5px 12px;
-            border-radius: 30px;
-            margin-top: 6px;
-            margin-bottom: 22px;
-            border: 1px solid rgba(26, 74, 122, 0.10);
+        }
+        .badge-local .material-symbols-outlined {
+            font-size: 18px;
         }
 
-        .badge-safe span {
-            font-size: 16px;
-        }
-
+        /* ===== 上传区域 ===== */
         .upload-zone {
-            border: 2px dashed #cbd5e1;
-            border-radius: 20px;
-            padding: 48px 24px 44px;
+            border: 2px dashed var(--md-outline);
+            border-radius: 16px;
+            padding: 44px 20px;
             text-align: center;
-            background: #fafcff;
-            transition: all 0.25s ease;
             cursor: pointer;
+            transition: background 0.2s, border-color 0.2s, transform 0.1s;
+            background: var(--md-surface-variant);
             position: relative;
+            margin-bottom: 20px;
         }
-
         .upload-zone:hover {
-            border-color: #2d5aa0;
-            background: #f5f9ff;
+            background: var(--md-primary-container);
+            border-color: var(--md-primary);
         }
-
         .upload-zone.dragover {
-            border-color: #2d5aa0;
-            background: #eef4fe;
-            box-shadow: 0 0 0 4px rgba(45, 90, 160, 0.10);
+            background: var(--md-primary-container);
+            border-color: var(--md-primary);
+            transform: scale(0.99);
         }
-
         .upload-zone .icon-upload {
             font-size: 52px;
+            color: var(--md-primary);
             display: block;
-            margin-bottom: 12px;
-            line-height: 1;
+            margin-bottom: 8px;
         }
-
-        .upload-zone h3 {
-            font-size: 18px;
-            font-weight: 600;
-            color: #0b1e33;
-            margin-bottom: 6px;
-        }
-
         .upload-zone p {
-            color: #6b7f99;
-            font-size: 14px;
-            margin-bottom: 4px;
+            font-weight: 500;
+            font-size: 17px;
+            color: var(--md-on-surface);
+            margin: 0;
         }
-
         .upload-zone .hint {
-            font-size: 13px;
-            color: #8a9db5;
-            margin-top: 8px;
+            color: var(--md-on-surface-variant);
+            font-size: 14px;
+            margin-top: 4px;
         }
-
-        .upload-zone .hint kbd {
-            background: #eef2f6;
-            padding: 2px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-family: inherit;
-            color: #1a3a5a;
-            border: 1px solid #dce3ec;
-        }
-
         .upload-zone input[type="file"] {
             position: absolute;
             inset: 0;
-            width: 100%;
-            height: 100%;
             opacity: 0;
             cursor: pointer;
         }
 
-        .loader {
+        /* ===== 状态条 ===== */
+        .status-box {
+            background: var(--md-surface-variant);
+            border-radius: 16px;
+            padding: 14px 20px;
+            margin: 12px 0 16px;
             display: none;
             align-items: center;
-            justify-content: center;
             gap: 14px;
-            padding: 24px 0 16px;
+            font-size: 15px;
+            border-left: 4px solid transparent;
+            transition: all 0.2s;
         }
-
-        .loader.active {
+        .status-box.show {
             display: flex;
         }
-
-        .loader .spinner {
-            width: 32px;
-            height: 32px;
-            border: 4px solid #e2e8f0;
-            border-top-color: #2d5aa0;
+        .status-box .spinner {
+            width: 22px;
+            height: 22px;
+            border: 3px solid var(--md-outline);
+            border-top-color: var(--md-primary);
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            animation: spin 0.7s linear infinite;
+            flex-shrink: 0;
         }
-
         @keyframes spin {
             to {
                 transform: rotate(360deg);
             }
         }
-
-        .loader span {
-            color: #1a3a5a;
-            font-weight: 500;
-            font-size: 15px;
+        .status-box .status-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        .status-box.error {
+            background: #FEF1F0;
+            border-left-color: #D32F2F;
+        }
+        body.dark-mode .status-box.error {
+            background: #3D1F1E;
+            border-left-color: #EF5350;
+        }
+        .status-box.success {
+            background: #ECF7ED;
+            border-left-color: #2E7D32;
+        }
+        body.dark-mode .status-box.success {
+            background: #1D3A2A;
+            border-left-color: #66BB6A;
         }
 
-        .result-area {
+        /* ===== 结果展示 ===== */
+        .result-section {
             display: none;
-            margin-top: 28px;
-            animation: fadeUp 0.4s ease;
+            margin-top: 16px;
+            animation: fadeUp 0.3s ease;
         }
-
-        .result-area.active {
+        .result-section.show {
             display: block;
         }
-
         @keyframes fadeUp {
             from {
                 opacity: 0;
-                transform: translateY(16px);
+                transform: translateY(8px);
             }
             to {
                 opacity: 1;
@@ -218,852 +324,583 @@
             }
         }
 
-        .result-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 18px;
-            padding-bottom: 14px;
-            border-bottom: 1px solid #edf2f7;
-        }
-
-        .result-header .status-icon {
-            width: 36px;
-            height: 36px;
-            background: #d1fae5;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            color: #0b7a4a;
-            flex-shrink: 0;
-        }
-
-        .result-header .status-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #0b1e33;
-        }
-
-        .result-header .status-sub {
-            font-size: 14px;
-            color: #5b6f87;
-            font-weight: 400;
-        }
-
-        .secret-card {
-            background: #f7faff;
+        .secret-row {
+            background: var(--md-surface-variant);
             border-radius: 16px;
-            padding: 18px 20px 16px;
-            border: 1px solid #e6edf6;
-            margin-bottom: 20px;
-        }
-
-        .secret-label {
+            padding: 14px 18px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: 13px;
-            font-weight: 600;
-            color: #3a5a7a;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
         }
-
-        .secret-label .copy-btn {
-            background: none;
-            border: none;
-            color: #2d5aa0;
+        .secret-label {
             font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            padding: 4px 12px;
-            border-radius: 8px;
-            transition: background 0.15s ease;
+            color: var(--md-on-surface);
+            font-size: 15px;
             display: flex;
             align-items: center;
-            gap: 5px;
-        }
-
-        .secret-label .copy-btn:hover {
-            background: #e6f0fa;
-        }
-
-        .secret-label .copy-btn.copied {
-            color: #0b7a4a;
-        }
-
-        .secret-value {
-            font-family: "SF Mono", "Menlo", "Monaco", "Cascadia Code", "Roboto Mono", monospace;
-            font-size: 26px;
-            font-weight: 600;
-            color: #0b1e33;
-            letter-spacing: 1.5px;
-            word-break: break-all;
-            background: #ffffff;
-            padding: 12px 16px;
-            border-radius: 12px;
-            border: 1px solid #e6edf6;
-            line-height: 1.4;
-            user-select: all;
-        }
-
-        @media (max-width: 520px) {
-            .secret-value {
-                font-size: 20px;
-                padding: 10px 12px;
-                letter-spacing: 1px;
-            }
-        }
-
-        .detail-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 6px;
-        }
-
-        @media (max-width: 480px) {
-            .detail-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .detail-item {
-            background: #fafcff;
-            border-radius: 12px;
-            padding: 12px 16px;
-            border: 1px solid #edf2f7;
-        }
-
-        .detail-item .label {
-            font-size: 12px;
-            font-weight: 500;
-            color: #6b7f99;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .detail-item .value {
-            font-size: 16px;
-            font-weight: 500;
-            color: #0b1e33;
-            margin-top: 4px;
-            word-break: break-all;
-        }
-
-        .detail-item .value.mono {
-            font-family: "SF Mono", "Menlo", "Monaco", monospace;
-            font-size: 14px;
-        }
-
-        .detail-item.full-width {
-            grid-column: 1 / -1;
-        }
-
-        .detail-item .value .tag {
-            display: inline-block;
-            background: #e6edf6;
-            padding: 0 10px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 500;
-            color: #1a4a7a;
-        }
-
-        .uri-box {
-            margin-top: 16px;
-            background: #f2f6fc;
-            border-radius: 12px;
-            padding: 12px 16px;
-            border: 1px solid #e6edf6;
-        }
-
-        .uri-box .label {
-            font-size: 12px;
-            font-weight: 500;
-            color: #6b7f99;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            margin-bottom: 4px;
-        }
-
-        .uri-box .uri-value {
-            font-family: "SF Mono", "Menlo", "Monaco", monospace;
-            font-size: 13px;
-            color: #1a3a5a;
-            word-break: break-all;
-            line-height: 1.6;
-            opacity: 0.85;
-        }
-
-        .error-msg {
-            display: none;
-            margin-top: 20px;
-            background: #fef2f2;
-            border-radius: 14px;
-            padding: 16px 20px;
-            border-left: 4px solid #dc2626;
-            color: #7f1d1d;
-        }
-
-        .error-msg.active {
-            display: block;
-            animation: fadeUp 0.3s ease;
-        }
-
-        .error-msg .error-icon {
-            font-size: 20px;
-            margin-right: 10px;
-        }
-
-        .error-msg .error-text {
-            font-weight: 500;
-        }
-        .error-msg .error-detail {
-            font-size: 14px;
-            margin-top: 4px;
-            opacity: 0.8;
-        }
-
-        .manual-toggle {
-            margin-top: 18px;
-            text-align: center;
-        }
-
-        .manual-toggle button {
-            background: none;
-            border: none;
-            color: #4a6f96;
-            font-size: 14px;
-            cursor: pointer;
-            padding: 6px 16px;
-            border-radius: 20px;
-            transition: background 0.15s ease;
-            text-decoration: underline dotted #8a9db5;
-            text-underline-offset: 4px;
-        }
-
-        .manual-toggle button:hover {
-            background: #eef2f6;
-        }
-
-        .manual-input-area {
-            display: none;
-            margin-top: 14px;
-            padding: 16px 18px 18px;
-            background: #f8faff;
-            border-radius: 16px;
-            border: 1px solid #e6edf6;
-        }
-
-        .manual-input-area.active {
-            display: block;
-            animation: fadeUp 0.3s ease;
-        }
-
-        .manual-input-area label {
-            font-size: 14px;
-            font-weight: 500;
-            color: #1a3a5a;
-            display: block;
-            margin-bottom: 6px;
-        }
-
-        .manual-input-area .input-row {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .manual-input-area input {
-            flex: 1;
-            min-width: 200px;
-            padding: 10px 14px;
-            border: 1.5px solid #dce3ec;
-            border-radius: 10px;
-            font-size: 15px;
-            font-family: "SF Mono", "Menlo", monospace;
-            background: #ffffff;
-            transition: border 0.2s ease;
-            outline: none;
-            color: #0b1e33;
-        }
-
-        .manual-input-area input:focus {
-            border-color: #2d5aa0;
-            box-shadow: 0 0 0 3px rgba(45, 90, 160, 0.12);
-        }
-
-        .manual-input-area .btn-parse {
-            padding: 10px 24px;
-            background: #2d5aa0;
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background 0.2s ease, transform 0.1s ease;
+            gap: 6px;
             white-space: nowrap;
         }
-
-        .manual-input-area .btn-parse:hover {
-            background: #1f4a85;
+        .secret-label .material-symbols-outlined {
+            font-size: 20px;
+            color: var(--md-primary);
         }
-
-        .manual-input-area .btn-parse:active {
-            transform: scale(0.97);
+        .secret-value {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 19px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            color: var(--md-on-surface);
+            word-break: break-all;
+            flex: 1;
+            min-width: 120px;
+            background: var(--md-surface);
+            padding: 4px 14px;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+            transition: background 0.2s;
         }
-
-        .footer {
-            margin-top: 28px;
-            padding-top: 18px;
-            border-top: 1px solid #edf2f7;
-            display: flex;
-            justify-content: space-between;
+        .btn-copy {
+            background: var(--md-surface);
+            border: 1px solid var(--md-outline);
+            border-radius: 40px;
+            padding: 8px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: 'Roboto', sans-serif;
+            color: var(--md-on-surface);
+            cursor: pointer;
+            display: inline-flex;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
+            gap: 6px;
+            transition: 0.15s;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
-
-        .footer .safe-note {
-            font-size: 13px;
-            color: #6b7f99;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .btn-copy:hover {
+            background: var(--md-primary-container);
+            border-color: var(--md-primary);
         }
-
-        .footer .safe-note span {
+        .btn-copy:active {
+            transform: scale(0.96);
+        }
+        .btn-copy .material-symbols-outlined {
             font-size: 18px;
         }
 
-        .footer .reset-btn {
-            background: none;
-            border: none;
-            color: #8a9db5;
+        .uri-row {
+            background: var(--md-surface-variant);
+            border-radius: 16px;
+            padding: 12px 16px;
             font-size: 13px;
-            cursor: pointer;
-            padding: 4px 12px;
-            border-radius: 8px;
-            transition: background 0.15s ease, color 0.15s ease;
+            color: var(--md-on-surface-variant);
+            word-break: break-all;
+            border: 1px solid var(--md-outline);
+            margin-top: 4px;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .uri-row strong {
+            color: var(--md-on-surface);
+            font-weight: 600;
         }
 
-        .footer .reset-btn:hover {
-            background: #eef2f6;
-            color: #4a6f96;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .text-center {
+        /* ===== 重置按钮 ===== */
+        .reset-row {
+            margin-top: 28px;
+            padding-top: 20px;
+            border-top: 1px solid var(--md-outline);
             text-align: center;
         }
-
-        .mt-8 {
-            margin-top: 8px;
-        }
-
-        .paste-toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(80px);
-            background: #1a2a3a;
-            color: #f0f4f8;
-            padding: 10px 22px;
-            border-radius: 14px;
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--md-outline);
+            border-radius: 40px;
+            color: var(--md-on-surface-variant);
+            padding: 10px 32px;
+            font-weight: 500;
+            font-family: 'Roboto', sans-serif;
             font-size: 14px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-            opacity: 0;
-            transition: opacity 0.3s ease, transform 0.4s ease;
-            pointer-events: none;
-            z-index: 999;
+            cursor: pointer;
+            transition: 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-secondary:hover {
+            background: var(--md-surface-variant);
+            border-color: var(--md-on-surface-variant);
+        }
+        .btn-secondary .material-symbols-outlined {
+            font-size: 18px;
         }
 
-        .paste-toast.show {
+        /* ===== Snackbar ===== */
+        .snackbar {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            background: #1E293B;
+            color: #FFFFFF;
+            padding: 14px 24px;
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: 500;
+            font-family: 'Roboto', sans-serif;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(-16px) scale(0.96);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            pointer-events: none;
+            z-index: 1000;
+            max-width: 400px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .snackbar.show {
             opacity: 1;
-            transform: translateX(-50%) translateY(0);
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+        .snackbar .material-symbols-outlined {
+            font-size: 22px;
+            color: #81C784;
+        }
+        body.dark-mode .snackbar {
+            background: #3A3A3A;
+            color: #E8E8E8;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 500px) {
+            .card {
+                padding: 20px 16px 28px;
+            }
+            .header-left h1 {
+                font-size: 24px;
+            }
+            .secret-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .secret-value {
+                font-size: 17px;
+                text-align: center;
+            }
+            .btn-copy {
+                align-self: center;
+            }
+            .snackbar {
+                top: 16px;
+                right: 16px;
+                left: 16px;
+                max-width: none;
+                font-size: 14px;
+                padding: 12px 18px;
+            }
+            .upload-zone {
+                padding: 32px 16px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="container" role="main">
+    <!-- ===== Snackbar ===== -->
+    <div id="snackbar" class="snackbar">
+        <span class="material-symbols-outlined">check_circle</span>
+        <span id="snackbarMessage">备用密钥已复制，请务必放在您认为安全的地方</span>
+    </div>
+
+    <!-- ===== 主卡片 ===== -->
+    <div class="card">
         <!-- 头部 -->
         <div class="header">
-            <div class="header-icon" aria-hidden="true">🔐</div>
-            <div class="header-text">
+            <div class="header-left">
+                <span class="material-symbols-outlined">key</span>
                 <h1>备用密钥提取</h1>
-                <p>从 2FA 二维码中提取 Secret 密钥</p>
+            </div>
+            <div class="header-right">
+                <a href="settings.html" class="material-symbols-outlined" title="设置主题与模式">settings</a>
             </div>
         </div>
-
-        <div class="badge-safe">
-            <span>🛡️</span> 全部在本地处理 · 数据不上传
+        <div class="subhead">
+            <span>从 2FA 二维码中提取 Secret</span>
+            <span class="badge-local">
+                <span class="material-symbols-outlined">shield</span>
+                本地处理 · 不上传
+            </span>
         </div>
 
         <!-- 上传区域 -->
         <div class="upload-zone" id="uploadZone">
-            <span class="icon-upload" aria-hidden="true">📷</span>
-            <h3>上传二维码图片</h3>
+            <span class="material-symbols-outlined icon-upload">cloud_upload</span>
             <p>点击选择或拖拽图片至此</p>
-            <div class="hint">
-                支持 PNG · JPG · WebP · GIF · BMP &nbsp;·&nbsp            </div>
+            <div class="hint">支持 PNG · JPG · WebP · GIF · BMP</div>
             <input type="file" id="fileInput" accept="image/*" />
         </div>
 
-        <!-- 加载动画 -->
-        <div class="loader" id="loader">
-            <div class="spinner"></div>
-            <span>正在识别二维码…</span>
+        <!-- 状态 -->
+        <div id="statusBox" class="status-box">
+            <span class="status-icon" id="statusIcon">⏳</span>
+            <span id="statusText">正在识别二维码…</span>
         </div>
 
-        <!-- 错误信息 -->
-        <div class="error-msg" id="errorMsg">
-            <div>
-                <span class="error-icon">⚠️</span>
-                <span class="error-text" id="errorText">解码失败</span>
-                <div class="error-detail" id="errorDetail">请尝试其他图片</div>
+        <!-- 结果 -->
+        <div id="resultSection" class="result-section">
+            <div class="secret-row">
+                <span class="secret-label">
+                    <span class="material-symbols-outlined">password</span>
+                    备用密钥
+                </span>
+                <span class="secret-value" id="secretDisplay">****</span>
+                <button class="btn-copy" id="copyBtn">
+                    <span class="material-symbols-outlined">content_copy</span> 复制
+                </button>
             </div>
-        </div>
-
-        <!-- 结果区域 -->
-        <div class="result-area" id="resultArea">
-            <div class="result-header">
-                <div class="status-icon">✅</div>
-                <div>
-                    <div class="status-title">解码成功</div>
-                    <div class="status-sub">已从二维码中提取以下信息</div>
-                </div>
-            </div>
-
-            <div class="secret-card">
-                <div class="secret-label">
-                    <span>🔑 备用密钥 (Secret)</span>
-                    <button class="copy-btn" id="copyBtn" title="复制密钥">
-                        <span>📋</span> 复制
-                    </button>
-                </div>
-                <div class="secret-value" id="secretValue">—</div>
-            </div>
-
-            <div class="detail-grid" id="detailGrid"></div>
-
-            <div class="uri-box" id="uriBox">
-                <div class="label">📄 完整 URI</div>
-                <div class="uri-value" id="uriValue">—</div>
+            <div class="uri-row">
+                <strong>完整 URI</strong><br />
+                <span id="uriDisplay">—</span>
             </div>
         </div>
 
-        <div class="manual-input-area" id="manualArea">
-            <label for="manualInput">输入 OTP URI 或纯 Secret 密钥</label>
-            <div class="input-row">
-                <input type="text" id="manualInput" placeholder="例如：otpauth://totp/... 或 JBSWY3DPEHPK3PXP" />
-                <button class="btn-parse" id="manualParseBtn">解析</button>
-            </div>
-        </div>
-
-        <!-- 页脚 -->
-        <div class="footer">
-            <button class="reset-btn" id="resetBtn">🔄 重新开始</button>
+        <!-- 重置 -->
+        <div class="reset-row">
+            <button class="btn-secondary" id="resetBtn">
+                <span class="material-symbols-outlined">refresh</span> 重新开始
+            </button>
         </div>
     </div>
-
-    <!-- 粘贴提示 -->
-    <div class="paste-toast" id="pasteToast">📋 已检测到图片，正在解码…</div>
 
     <script>
         (function() {
             'use strict';
 
-            // ---- DOM 引用 ----
-            const uploadZone = document.getElementById('uploadZone');
+            // ===== 应用颜色主题 =====
+            function applyColorTheme(themeName) {
+                const root = document.documentElement;
+                const themes = {
+                    blue: {
+                        primary: '#1A73E8',
+                        onPrimary: '#FFFFFF',
+                        primaryContainer: '#D2E3FC',
+                        onPrimaryContainer: '#041E49',
+                    },
+                    purple: {
+                        primary: '#7C3AED',
+                        onPrimary: '#FFFFFF',
+                        primaryContainer: '#E4D7F5',
+                        onPrimaryContainer: '#2D1B4E',
+                    },
+                    pink: {
+                        primary: '#D81B60',
+                        onPrimary: '#FFFFFF',
+                        primaryContainer: '#F8D4E0',
+                        onPrimaryContainer: '#4A0D24',
+                    },
+                    green: {
+                        primary: '#0F7B3A',
+                        onPrimary: '#FFFFFF',
+                        primaryContainer: '#C8E6C9',
+                        onPrimaryContainer: '#052E14',
+                    },
+                    orange: {
+                        primary: '#E65100',
+                        onPrimary: '#FFFFFF',
+                        primaryContainer: '#FDE0C8',
+                        onPrimaryContainer: '#4A1A00',
+                    }
+                };
+                const theme = themes[themeName] || themes.blue;
+                root.style.setProperty('--md-primary', theme.primary);
+                root.style.setProperty('--md-on-primary', theme.onPrimary);
+                root.style.setProperty('--md-primary-container', theme.primaryContainer);
+                root.style.setProperty('--md-on-primary-container', theme.onPrimaryContainer);
+                localStorage.setItem('md3_color_theme', themeName);
+            }
+
+            // ===== 应用外观模式 =====
+            function applyAppearanceMode(mode) {
+                const body = document.body;
+                // 移除所有模式类
+                body.classList.remove('light-mode', 'dark-mode');
+                if (mode === 'auto') {
+                    // 跟随系统
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    body.classList.add(prefersDark ? 'dark-mode' : 'light-mode');
+                } else {
+                    body.classList.add(mode === 'dark' ? 'dark-mode' : 'light-mode');
+                }
+                localStorage.setItem('md3_appearance_mode', mode);
+            }
+
+            // ===== 加载保存的设置 =====
+            function loadSettings() {
+                const colorTheme = localStorage.getItem('md3_color_theme') || 'blue';
+                const appearanceMode = localStorage.getItem('md3_appearance_mode') || 'auto';
+                applyColorTheme(colorTheme);
+                applyAppearanceMode(appearanceMode);
+
+                // 监听系统变化（自动模式时）
+                const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+                const handleChange = (e) => {
+                    const currentMode = localStorage.getItem('md3_appearance_mode') || 'auto';
+                    if (currentMode === 'auto') {
+                        document.body.classList.remove('light-mode', 'dark-mode');
+                        document.body.classList.add(e.matches ? 'dark-mode' : 'light-mode');
+                    }
+                };
+                mediaQuery.addEventListener('change', handleChange);
+                // 保存监听器以便清理（但页面关闭无需）
+            }
+
+            // 加载设置
+            loadSettings();
+
+            // ===== DOM 引用 =====
             const fileInput = document.getElementById('fileInput');
-            const loader = document.getElementById('loader');
-            const resultArea = document.getElementById('resultArea');
-            const errorMsg = document.getElementById('errorMsg');
-            const errorText = document.getElementById('errorText');
-            const errorDetail = document.getElementById('errorDetail');
-            const secretValue = document.getElementById('secretValue');
-            const detailGrid = document.getElementById('detailGrid');
-            const uriValue = document.getElementById('uriValue');
+            const uploadZone = document.getElementById('uploadZone');
+            const statusBox = document.getElementById('statusBox');
+            const statusIcon = document.getElementById('statusIcon');
+            const statusText = document.getElementById('statusText');
+            const resultSection = document.getElementById('resultSection');
+            const secretDisplay = document.getElementById('secretDisplay');
+            const uriDisplay = document.getElementById('uriDisplay');
             const copyBtn = document.getElementById('copyBtn');
             const resetBtn = document.getElementById('resetBtn');
-            const manualToggleBtn = document.getElementById('manualToggleBtn');
-            const manualArea = document.getElementById('manualArea');
-            const manualInput = document.getElementById('manualInput');
-            const manualParseBtn = document.getElementById('manualParseBtn');
-            const pasteToast = document.getElementById('pasteToast');
+            const snackbar = document.getElementById('snackbar');
+            const snackbarMessage = document.getElementById('snackbarMessage');
 
-            // ---- 状态 ----
             let currentSecret = '';
             let currentUri = '';
 
-            // ---- 工具函数 ----
-            function show(el) { el.classList.add('active'); }
-
-            function hide(el) { el.classList.remove('active'); }
-
-            function showError(msg, detail) {
-                errorText.textContent = msg || '解码失败';
-                errorDetail.textContent = detail || '请尝试其他图片或手动输入密钥';
-                show(errorMsg);
-                hide(resultArea);
+            // ===== 工具函数 =====
+            function maskSecret(secret) {
+                if (!secret) return '****';
+                const s = secret.trim();
+                if (s.length <= 6) {
+                    if (s.length <= 4) return s;
+                    return s.slice(0, 4) + '****';
+                }
+                const head = s.slice(0, 4);
+                const tail = s.slice(-4);
+                return head + '****' + tail;
             }
 
-            function hideError() { hide(errorMsg); }
-
-            function showResult(data) {
-                hideError();
-                hide(loader);
-                show(resultArea);
-                renderResult(data);
+            function showSnackbar(msg) {
+                snackbarMessage.textContent = msg || '备用密钥已复制，请务必放在您认为安全的地方';
+                snackbar.classList.add('show');
+                clearTimeout(snackbar._hideTimer);
+                snackbar._hideTimer = setTimeout(() => {
+                    snackbar.classList.remove('show');
+                }, 4500);
             }
 
-            function resetAll() {
-                hide(resultArea);
-                hide(errorMsg);
-                hide(loader);
-                hide(manualArea);
-                currentSecret = '';
-                currentUri = '';
-                fileInput.value = '';
-                manualInput.value = '';
-                copyBtn.textContent = '📋 复制';
-                copyBtn.classList.remove('copied');
-                secretValue.textContent = '—';
-                uriValue.textContent = '—';
-                detailGrid.innerHTML = '';
-                uploadZone.classList.remove('dragover');
-            }
-
-            // ---- 粘贴提示 ----
-            let toastTimer = null;
-
-            function showPasteToast(msg) {
-                pasteToast.textContent = msg || '📋 已检测到图片，正在解码…';
-                pasteToast.classList.add('show');
-                clearTimeout(toastTimer);
-                toastTimer = setTimeout(() => {
-                    pasteToast.classList.remove('show');
-                }, 2000);
-            }
-
-            // ---- 解析 OTP URI (纯前端) ----
-            function parseOTPURI(uri) {
-                const result = {
-                    type: 'unknown',
-                    issuer: '',
-                    account: '',
-                    secret: '',
-                    algorithm: 'SHA1',
-                    digits: '6',
-                    period: '30',
-                    counter: null,
-                    raw: uri,
-                    valid: false,
-                };
-
-                // 尝试解析为 URI
-                let match = uri.match(/^otpauth:\/\/([a-zA-Z]+)\/([^?]+)\?(.*)$/);
-                if (!match) {
-                    // 如果不是 URI 格式，尝试作为纯 secret
-                    const cleaned = uri.replace(/\s/g, '').toUpperCase();
-                    if (/^[A-Z2-7]+=*$/.test(cleaned) && cleaned.length >= 12) {
-                        result.secret = cleaned;
-                        result.valid = true;
-                        result.type = 'secret-only';
-                        return result;
-                    }
-                    return result;
+            function copySecret() {
+                if (!currentSecret) {
+                    showSnackbar('没有可复制的密钥');
+                    return;
                 }
-
-                result.type = match[1].toLowerCase();
-                const label = match[2];
-                const params = new URLSearchParams(match[3]);
-
-                const labelParts = label.split(':');
-                if (labelParts.length === 2) {
-                    result.issuer = decodeURIComponent(labelParts[0]);
-                    result.account = decodeURIComponent(labelParts[1]);
-                } else {
-                    result.account = decodeURIComponent(label);
-                }
-
-                const secretParam = params.get('secret');
-                if (secretParam) {
-                    result.secret = secretParam.toUpperCase().replace(/\s/g, '');
-                }
-
-                const issuerParam = params.get('issuer');
-                if (issuerParam && !result.issuer) {
-                    result.issuer = decodeURIComponent(issuerParam);
-                }
-                if (issuerParam) {
-                    result.issuer = decodeURIComponent(issuerParam);
-                }
-
-                const algo = params.get('algorithm');
-                if (algo) result.algorithm = algo.toUpperCase();
-
-                const digits = params.get('digits');
-                if (digits) result.digits = digits;
-
-                const period = params.get('period');
-                if (period) result.period = period;
-
-                const counter = params.get('counter');
-                if (counter) result.counter = parseInt(counter, 10);
-
-                if (result.secret && result.secret.length >= 12) {
-                    result.valid = true;
-                }
-
-                return result;
-            }
-
-            // ---- 渲染结果 ----
-            function renderResult(data) {
-                const { type, issuer, account, secret, algorithm, digits, period, counter, raw } = data;
-
-                currentSecret = secret || '';
-                currentUri = raw || '';
-
-                secretValue.textContent = secret || '（未找到密钥）';
-                uriValue.textContent = raw || '（无 URI）';
-
-                const items = [];
-
-                let typeLabel = type === 'totp' ? '⏱️ TOTP (基于时间)' :
-                    type === 'hotp' ? '🔢 HOTP (基于计数器)' :
-                    type === 'secret-only' ? '🔑 纯密钥' :
-                    '❓ 未知';
-                items.push({ label: '类型', value: typeLabel });
-
-                if (issuer) items.push({ label: '发行者', value: issuer });
-                if (account) items.push({ label: '账户', value: account });
-                if (type !== 'secret-only' && algorithm) {
-                    items.push({ label: '算法', value: algorithm });
-                }
-                if (type !== 'secret-only' && digits) {
-                    items.push({ label: '密码位数', value: digits + ' 位' });
-                }
-                if (type === 'totp' && period) {
-                    items.push({ label: '周期', value: period + ' 秒' });
-                }
-                if (type === 'hotp' && counter !== null) {
-                    items.push({ label: '计数器', value: String(counter) });
-                }
-                if (!issuer && !account && type !== 'secret-only') {
-                    items.push({ label: '备注', value: '仅包含密钥，无发行者/账户信息' });
-                }
-
-                detailGrid.innerHTML = '';
-                items.forEach((item) => {
-                    const div = document.createElement('div');
-                    div.className = 'detail-item';
-                    if (item.label === '备注' || item.label === '完整 URI') {
-                        div.classList.add('full-width');
-                    }
-                    div.innerHTML = `
-                        <div class="label">${item.label}</div>
-                        <div class="value">${item.value}</div>
-                    `;
-                    detailGrid.appendChild(div);
-                });
-
-                if (items.length === 0) {
-                    detailGrid.innerHTML = `
-                        <div class="detail-item full-width">
-                            <div class="label">信息</div>
-                            <div class="value">未能解析出详细信息</div>
-                        </div>
-                    `;
-                }
-
-                resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-
-            // ---- 处理解码结果 ----
-            function handleDecodedText(text) {
-                const parsed = parseOTPURI(text);
-                if (parsed.valid) {
-                    showResult(parsed);
-                    return true;
-                } else {
-                    const cleaned = text.replace(/\s/g, '').toUpperCase();
-                    if (cleaned.length >= 12 && /^[A-Z2-7]+=*$/.test(cleaned)) {
-                        const fallback = {
-                            type: 'secret-only',
-                            issuer: '',
-                            account: '',
-                            secret: cleaned,
-                            algorithm: '',
-                            digits: '',
-                            period: '',
-                            counter: null,
-                            raw: text,
-                            valid: true,
-                        };
-                        showResult(fallback);
-                        return true;
-                    }
-                    showError('无法解析二维码内容', '内容不是有效的 OTP URI 或密钥格式');
-                    return false;
-                }
-            }
-
-            // ---- 调用 Python 解码图片 ----
-            function decodeImageWithPython(dataUrl) {
-                // 使用 pywebview.api 调用 Python 方法
-                if (window.pywebview && window.pywebview.api && window.pywebview.api.decode_qr_from_image) {
-                    window.pywebview.api.decode_qr_from_image(dataUrl)
-                        .then(function(result) {
-                            hide(loader);
-                            if (result) {
-                                handleDecodedText(result);
-                            } else {
-                                showError('未识别到二维码', '请尝试其他图片或手动输入密钥');
-                            }
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(currentSecret)
+                        .then(() => {
+                            showSnackbar('备用密钥已复制，请务必放在您认为安全的地方');
                         })
-                        .catch(function(err) {
-                            hide(loader);
-                            console.error('Python 调用失败:', err);
-                            showError('解码失败', '请确保 Python 后端正常运行，或尝试手动输入');
+                        .catch(() => {
+                            fallbackCopy(currentSecret);
                         });
                 } else {
-                    // 降级：如果 pywebview 不可用（比如直接打开 HTML），使用前端 jsQR 解码（但本页面未引用 jsQR，所以会失败）
-                    hide(loader);
-                    showError('环境错误', '本工具需在 PyWebView 桌面应用中运行');
-                }
-            }
-
-            // ---- 处理文件 ----
-            function processFile(file) {
-                if (!file || !file.type.startsWith('image/')) {
-                    showError('请上传图片文件', '支持 PNG、JPG、WebP、GIF、BMP 等格式');
-                    return;
-                }
-
-                hideError();
-                hide(resultArea);
-                show(loader);
-
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const dataUrl = e.target.result;
-                    // 调用 Python 解码
-                    decodeImageWithPython(dataUrl);
-                };
-                reader.onerror = function() {
-                    hide(loader);
-                    showError('文件读取失败', '请重试或选择其他图片');
-                };
-                reader.readAsDataURL(file);
-            }
-
-            // ---- 处理粘贴 ----
-            function handlePaste(e) {
-                const items = e.clipboardData && e.clipboardData.items;
-                if (!items) return;
-
-                let imageItem = null;
-                for (const item of items) {
-                    if (item.type.startsWith('image/')) {
-                        imageItem = item;
-                        break;
-                    }
-                }
-
-                if (imageItem) {
-                    showPasteToast('📋 已检测到图片，正在解码…');
-                    const file = imageItem.getAsFile();
-                    processFile(file);
-                    e.preventDefault();
-                }
-            }
-
-            // ---- 手动输入解析 ----
-            function parseManualInput() {
-                const input = manualInput.value.trim();
-                if (!input) {
-                    showError('请输入内容', '请输入 OTP URI 或纯密钥文本');
-                    return;
-                }
-
-                hideError();
-                hide(resultArea);
-                show(loader);
-
-                // 模拟异步（实际上立即解析）
-                setTimeout(() => {
-                    hide(loader);
-                    const parsed = parseOTPURI(input);
-                    if (parsed.valid) {
-                        showResult(parsed);
-                        hide(manualArea);
-                        manualToggleBtn.textContent = '✏️ 无法识别？手动输入密钥';
-                    } else {
-                        showError('无法解析输入', '请输入有效的 OTP URI 或 Base32 密钥');
-                    }
-                }, 300);
-            }
-
-            // ---- 复制 ----
-            function copySecret() {
-                const text = currentSecret || secretValue.textContent;
-                if (!text || text === '—') {
-                    alert('没有可复制的密钥');
-                    return;
-                }
-
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(text).then(() => {
-                        showCopyFeedback();
-                    }).catch(() => {
-                        fallbackCopy(text);
-                    });
-                } else {
-                    fallbackCopy(text);
+                    fallbackCopy(currentSecret);
                 }
             }
 
             function fallbackCopy(text) {
-                const ta = document.createElement('textarea');
-                ta.value = text;
-                ta.style.position = 'fixed';
-                ta.style.opacity = '0';
-                ta.style.left = '-9999px';
-                document.body.appendChild(ta);
-                ta.select();
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.left = '-9999px';
+                textarea.style.top = '-9999px';
+                document.body.appendChild(textarea);
+                textarea.select();
                 try {
                     document.execCommand('copy');
-                    showCopyFeedback();
+                    showSnackbar('备用密钥已复制，请务必放在您认为安全的地方');
                 } catch (e) {
-                    alert('复制失败，请手动复制密钥');
+                    showSnackbar('复制失败，请手动复制');
                 }
-                document.body.removeChild(ta);
+                document.body.removeChild(textarea);
             }
 
-            function showCopyFeedback() {
-                copyBtn.textContent = '✅ 已复制';
-                copyBtn.classList.add('copied');
-                setTimeout(() => {
-                    copyBtn.textContent = '📋 复制';
-                    copyBtn.classList.remove('copied');
-                }, 2000);
+            function showResult(secret, uri) {
+                currentSecret = secret;
+                currentUri = uri || '';
+                secretDisplay.textContent = maskSecret(secret);
+                uriDisplay.textContent = uri || '—';
+                resultSection.classList.add('show');
             }
 
-            // ---- 事件绑定 ----
+            function setStatus(type, message) {
+                statusBox.className = 'status-box show';
+                if (type === 'loading') {
+                    statusBox.className = 'status-box show';
+                    statusIcon.textContent = '⏳';
+                    statusText.textContent = message || '正在识别二维码…';
+                } else if (type === 'success') {
+                    statusBox.className = 'status-box show success';
+                    statusIcon.textContent = '✅';
+                    statusText.textContent = message || '解码成功';
+                } else if (type === 'error') {
+                    statusBox.className = 'status-box show error';
+                    statusIcon.textContent = '⚠️';
+                    statusText.textContent = message || '解码失败，请尝试其他图片';
+                } else {
+                    statusBox.classList.remove('show');
+                }
+            }
+
+            function hideStatus() {
+                statusBox.classList.remove('show');
+            }
+
+            // ===== 验证 Secret =====
+            function isValidSecret(secret) {
+                if (!secret) return false;
+                const s = secret.replace(/\s/g, '').toUpperCase();
+                if (!/^[A-Z2-7]{12,}$/.test(s)) return false;
+                return true;
+            }
+
+            // ===== 从数据中提取 Secret =====
+            function parseSecretFromData(data) {
+                if (!data) return null;
+                const trimmed = data.trim();
+
+                if (trimmed.startsWith('otpauth://')) {
+                    try {
+                        const url = new URL(trimmed);
+                        const secret = url.searchParams.get('secret');
+                        if (secret && isValidSecret(secret)) {
+                            return { secret: secret.toUpperCase(), uri: trimmed };
+                        }
+                    } catch (_) {}
+                }
+
+                const clean = trimmed.replace(/\s/g, '').toUpperCase();
+                if (isValidSecret(clean)) {
+                    return { secret: clean, uri: '' };
+                }
+
+                if (trimmed.includes('secret=')) {
+                    const match = trimmed.match(/[?&]secret=([^&]+)/i);
+                    if (match) {
+                        const secret = match[1].toUpperCase();
+                        if (isValidSecret(secret)) {
+                            return { secret, uri: trimmed };
+                        }
+                    }
+                }
+
+                return null;
+            }
+
+            // ===== 多策略解码 =====
+            function decodeQRFromImage(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        tryDecode(img, 0);
+                    };
+                    img.onerror = function() {
+                        setStatus('error', '图片加载失败，请检查文件是否损坏');
+                    };
+                    img.src = e.target.result;
+                };
+                reader.onerror = function() {
+                    setStatus('error', '读取文件失败');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            function tryDecode(img, attempt) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+
+                let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+                // 灰度化 (attempt 1)
+                if (attempt === 1) {
+                    const data = imageData.data;
+                    for (let i = 0; i < data.length; i += 4) {
+                        const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                        data[i] = gray;
+                        data[i + 1] = gray;
+                        data[i + 2] = gray;
+                    }
+                    ctx.putImageData(imageData, 0, 0);
+                    imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                }
+
+                const inversionModes = ['dontInvert', 'attemptBoth', 'onlyInvert'];
+                const mode = inversionModes[attempt % inversionModes.length] || 'dontInvert';
+
+                let code = null;
+                try {
+                    code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: mode,
+                    });
+                } catch (e) {
+                    console.warn('jsQR error:', e);
+                }
+
+                if (code && code.data) {
+                    const parsed = parseSecretFromData(code.data);
+                    if (parsed) {
+                        setStatus('success', '解码成功');
+                        showResult(parsed.secret, parsed.uri);
+                        return;
+                    } else {
+                        setStatus('error', '您提供的图片不是2FA二维码，请重新上传！');
+                        return;
+                    }
+                }
+
+                const next = attempt + 1;
+                if (next < 6) {
+                    tryDecode(img, next);
+                } else {
+                    setStatus('error', '未能识别二维码，请确保图片清晰且包含有效的2FA二维码');
+                }
+            }
+
+            // ===== 重置 =====
+            function resetAll() {
+                currentSecret = '';
+                currentUri = '';
+                secretDisplay.textContent = '****';
+                uriDisplay.textContent = '—';
+                resultSection.classList.remove('show');
+                hideStatus();
+                fileInput.value = '';
+                uploadZone.classList.remove('dragover');
+            }
+
+            // ===== 事件绑定 =====
             fileInput.addEventListener('change', function(e) {
                 if (this.files && this.files.length > 0) {
-                    processFile(this.files[0]);
+                    const file = this.files[0];
+                    if (file.type.startsWith('image/')) {
+                        setStatus('loading', '正在识别二维码…');
+                        decodeQRFromImage(file);
+                    } else {
+                        setStatus('error', '请选择图片文件');
+                    }
                 }
                 this.value = '';
             });
@@ -1085,57 +922,20 @@
                 if (files && files.length > 0) {
                     const file = files[0];
                     if (file.type.startsWith('image/')) {
-                        processFile(file);
+                        setStatus('loading', '正在识别二维码…');
+                        decodeQRFromImage(file);
                     } else {
-                        showError('请拖拽图片文件', '不支持此文件类型');
+                        setStatus('error', '请拖拽图片文件');
                     }
                 }
             });
 
-            uploadZone.addEventListener('click', function(e) {
-                if (e.target.tagName !== 'INPUT') {
-                    fileInput.click();
-                }
-            });
-
-            document.addEventListener('paste', handlePaste);
-
             copyBtn.addEventListener('click', copySecret);
+            resetBtn.addEventListener('click', resetAll);
 
-            resetBtn.addEventListener('click', function() {
-                resetAll();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-
-            manualToggleBtn.addEventListener('click', function() {
-                const isActive = manualArea.classList.contains('active');
-                if (isActive) {
-                    hide(manualArea);
-                    this.textContent = '✏️ 无法识别？手动输入密钥';
-                } else {
-                    show(manualArea);
-                    this.textContent = '✖ 收起手动输入';
-                    manualInput.focus();
-                }
-            });
-
-            manualParseBtn.addEventListener('click', parseManualInput);
-            manualInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    parseManualInput();
-                }
-            });
-
-            // ---- 初始化 ----
+            // 初始状态
             resetAll();
-
-            if (!window.pywebview) {
-                console.warn('pywebview 未加载，请确保在 PyWebView 环境中运行');
-                // 可以提示用户，但不影响手动输入
-            }
-
-            console.log('🔐 2FA 备用密钥提取工具已加载 (PyWebView 版本)');
+            console.log('🔐 2FA 备用密钥提取工具 (Material Design) 已加载');
         })();
     </script>
 </body>
